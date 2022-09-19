@@ -1,6 +1,17 @@
+//VERY IMPORTANT
+//to see colors in terminals add this line at the end of platformio.ini
+//monitor_flags = --raw
 #include <Arduino.h>
+#include "Colors.h"
+#include "IoTicosSplitter.h"
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#include <PubSubClient.h>
+
 
 void setup() {
+
   Serial.begin(921600);
   Serial.println("Bienvenido Esta funcionando y programado desde vs code con platformIO");
 
