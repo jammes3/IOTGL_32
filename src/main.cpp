@@ -74,10 +74,9 @@ void setup() {
 
 void loop() {
   check_mqtt_connection();
+
   
 }
-
-
 
 bool reconnect(){
 
@@ -111,6 +110,13 @@ bool reconnect(){
 }
 
 void check_mqtt_connection(){
+
+  if(WiFi.status() != WL_CONNECTED){
+    Serial.print(Red + "\n\n         Ups WiFi Connection Failed :( ");
+    Serial.println(" -> Restarting..." + fontReset);
+    delay(15000);
+    ESP.restart();
+  }
   
   if(!client.connected()){
     
@@ -126,6 +132,8 @@ void check_mqtt_connection(){
   }else{
     client.loop();
   }
+
+
 
 }
 
