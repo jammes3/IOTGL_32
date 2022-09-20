@@ -22,8 +22,8 @@ const char *wifi_ssid = "Loading";
 const char *wifi_password = "Hamburgesita.92";
 
 //Functions definitions
+bool get_mqtt_credentials();
 void clear();
-
 
 void setup() {
 
@@ -31,7 +31,7 @@ void setup() {
   pinMode(led, OUTPUT);
   clear();
 
-  Serial.print(underlinePurple + "\n\n\nWiFi Connection in Progress   " + fontReset + Purple);
+  Serial.print(underlinePurple + "\n\n\nWiFi Connection in Progress" + fontReset + Purple);
 
   WiFi.begin(wifi_ssid,wifi_password);
 
@@ -49,7 +49,6 @@ void setup() {
       delay(2000);
       ESP.restart();
     }
-
   }
 
   Serial.print("  ⤵" + fontReset);
@@ -62,11 +61,52 @@ void setup() {
   Serial.println(fontReset);
 
 
+  get_mqtt_credentials();
+
 
 }
 
 void loop() {
-  
+
+}
+
+
+
+bool get_mqtt_credentials(){
+
+  Serial.print(underlinePurple + "\n\n\nGetting MQTT Credentials from WebHook" + fontReset + Purple + "  ⤵");
+  delay(1000);
+
+  String toSend = "dId=" + dId + "&password=" + webhook_pass;
+
+  HTTPClient http;
+  http.begin(webhook_endpoint);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+
+  int response_code = http.POST(toSend);
+
+
+  if(response_code < 0 ){
+    Serial.print(boldRed + "\n\n         Error Sending Post Request :( " + fontReset);
+    http.end();
+    return false;
+  }
+
+  if(response_code != 200){
+    Serial.print(boldRed + "\n\n         Error in response :(   e-> "  + fontReset + " " + response_code);
+    http.end();
+    return false;
+  }
+
+  if (response_code == 200){
+    String responseBody = http.getString();
+
+    Serial.print(boldGreen + "\n\n         Mqtt Credentials Obtained Successfully :) " + fontReset);
+    Serial.print("\n\n" + responseBody);
+    delay(2000);
+
+  }
+
 }
 
 
