@@ -25,6 +25,8 @@ const char *wifi_password = "Hamburgesita.92";
 bool get_mqtt_credentials();
 void clear();
 
+DynamicJsonDocument mqtt_data_doc(2048);
+
 void setup() {
 
   Serial.begin(921600);
@@ -102,10 +104,23 @@ bool get_mqtt_credentials(){
     String responseBody = http.getString();
 
     Serial.print(boldGreen + "\n\n         Mqtt Credentials Obtained Successfully :) " + fontReset);
-    Serial.print("\n\n" + responseBody);
-    delay(2000);
+    
+    deserializeJson(mqtt_data_doc, responseBody);
+    http.end();
+    delay(1000);
 
+    // String mqtt_username = mqtt_data_doc["username"];
+    // String mqtt_password = mqtt_data_doc["password"];
+    // int freq = mqtt_data_doc["variables"][1]["variableSendFreq"];
+
+    // Serial.println(mqtt_username);
+    // Serial.println(mqtt_password);
+    // Serial.println(freq);
+
+    delay(30000);
   }
+
+  return false;
 
 }
 
