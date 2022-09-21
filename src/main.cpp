@@ -12,7 +12,7 @@
 String dId = "4566";
 String webhook_pass = "mvzSp1KQ6P";
 String webhook_endpoint = "http://192.168.1.2:3001/api/getdevicecredentials";
-const char* mqtt_server = "192.168.1.2";
+const char *mqtt_server = "192.168.1.2";
 
 //PINS
 #define led 2
@@ -25,16 +25,19 @@ const char *wifi_password = "Hamburgesita.92";
 bool get_mqtt_credentials();
 void check_mqtt_connection();
 bool reconnect();
+void process_sensors();
+void process_actuators();
 void clear();
 
 //Global Vars
-WiFiClient  espclient;
+WiFiClient espclient;
 PubSubClient client(espclient);
 long lastReconnectAttemp = 0;
 
 DynamicJsonDocument mqtt_data_doc(2048);
 
-void setup() {
+void setup()
+{
 
   Serial.begin(921600);
   pinMode(led, OUTPUT);
@@ -42,16 +45,18 @@ void setup() {
 
   Serial.print(underlinePurple + "\n\n\nWiFi Connection in Progress" + fontReset + Purple);
 
-  WiFi.begin(wifi_ssid,wifi_password);
+  WiFi.begin(wifi_ssid, wifi_password);
 
   int counter = 0;
 
-  while (WiFi.status() != WL_CONNECTED){
+  while (WiFi.status() != WL_CONNECTED)
+  {
     delay(500);
     Serial.print(".");
     counter++;
 
-    if(counter > 10){
+    if (counter > 10)
+    {
       Serial.print("  ⤵" + fontReset);
       Serial.print(Red + "\n\n         Ups WiFi Connection Failed :( ");
       Serial.println(" -> Restarting..." + fontReset);
@@ -68,19 +73,81 @@ void setup() {
   Serial.print(boldBlue);
   Serial.print(WiFi.localIP());
   Serial.println(fontReset);
-
-
 }
 
-void loop() {
+void loop()
+{
   check_mqtt_connection();
 
-  
+  process_sensors();
+  process_actuators();
+
+  delay(5000);
+  serializeJsonPretty(mqtt_data_doc, Serial);
 }
 
-bool reconnect(){
 
-  if (!get_mqtt_credentials()){
+int prev_temp = 0;
+int prev_hum = 0;
+
+
+void process_sensors(){
+
+
+  //get temp simulation
+  int temp = random(1, 100);
+  mqtt_data_doc["variables"][0]["last"]["value"] = temp;
+
+
+  //save temp?
+  int dif = temp - prev_temp;
+  if (dif < 0) {dif *= -1;}
+
+  if (dif >= 40) {
+    mqtt_data_doc["variables"][0]["last"]["save"] = 1;
+  }else{
+    mqtt_data_doc["variables"][0]["last"]["save"] = 0;
+  }
+
+  prev_temp = temp;
+
+
+
+
+  //get humidity simulation
+  int hum = random (1, 50);
+  mqtt_data_doc["variables"][1]["last"]["value"] = hum;
+
+    //save hum?
+  dif = hum - prev_hum;
+  if (dif < 0) {dif *= -1;}
+
+  if (dif >= 20) {
+    mqtt_data_doc["variables"][1]["last"]["save"] = 1;
+  }else{
+    mqtt_data_doc["variables"][1]["last"]["save"] = 0;
+  }
+
+  prev_hum = hum;
+
+
+
+}
+
+void process_actuators(){
+  if (mqtt_data_doc["variables"][2]["last"]["value"] == true){
+    digitalWrite(led, HIGH);
+  }else if(mqtt_data_doc["variables"][2]["last"]["value"] == false){
+    digitalWrite(led, LOW);
+  }
+}
+
+
+bool reconnect()
+{
+
+  if (!get_mqtt_credentials())
+  {
     Serial.println(boldRed + "\n\n      Error getting mqtt credentials :( \n\n RESTARTING IN 10 SECONDS");
     Serial.println(fontReset);
     delay(10000);
@@ -92,52 +159,58 @@ bool reconnect(){
 
   Serial.print(underlinePurple + "\n\n\nTrying MQTT Connection" + fontReset + Purple + "  ⤵");
 
-  String str_client_id = "device_" + dId + "_" + random(1,9999);
-  const char* username = mqtt_data_doc["username"];
-  const char* password = mqtt_data_doc["password"];
+  String str_client_id = "device_" + dId + "_" + random(1, 9999);
+  const char *username = mqtt_data_doc["username"];
+  const char *password = mqtt_data_doc["password"];
   String str_topic = mqtt_data_doc["topic"];
 
-  if(client.connect(str_client_id.c_str(), username, password)){
+  if (client.connect(str_client_id.c_str(), username, password))
+  {
     Serial.print(boldGreen + "\n\n         Mqtt Client Connected :) " + fontReset);
     delay(2000);
 
     client.subscribe((str_topic + "+/actdata").c_str());
-  }else{
+  }
+  else
+  {
     Serial.print(boldRed + "\n\n         Mqtt Client Connection Failed :( " + fontReset);
   }
-
-
+  return false;
 }
 
-void check_mqtt_connection(){
+void check_mqtt_connection()
+{
 
-  if(WiFi.status() != WL_CONNECTED){
+  if (WiFi.status() != WL_CONNECTED)
+  {
     Serial.print(Red + "\n\n         Ups WiFi Connection Failed :( ");
     Serial.println(" -> Restarting..." + fontReset);
     delay(15000);
     ESP.restart();
   }
-  
-  if(!client.connected()){
-    
+
+  if (!client.connected())
+  {
+
     long now = millis();
 
-    if (now - lastReconnectAttemp > 5000){
+    if (now - lastReconnectAttemp > 5000)
+    {
       lastReconnectAttemp = millis();
-       if(reconnect()){
-         lastReconnectAttemp = 0;
-       }
+      if (reconnect())
+      {
+        lastReconnectAttemp = 0;
+      }
     }
-
-  }else{
+  }
+  else
+  {
     client.loop();
   }
-
-
-
 }
 
-bool get_mqtt_credentials(){
+bool get_mqtt_credentials()
+{
 
   Serial.print(underlinePurple + "\n\n\nGetting MQTT Credentials from WebHook" + fontReset + Purple + "  ⤵");
   delay(1000);
@@ -150,32 +223,32 @@ bool get_mqtt_credentials(){
 
   int response_code = http.POST(toSend);
 
-
-  if(response_code < 0 ){
+  if (response_code < 0)
+  {
     Serial.print(boldRed + "\n\n         Error Sending Post Request :( " + fontReset);
     http.end();
     return false;
   }
 
-  if(response_code != 200){
-    Serial.print(boldRed + "\n\n         Error in response :(   e-> "  + fontReset + " " + response_code);
+  if (response_code != 200)
+  {
+    Serial.print(boldRed + "\n\n         Error in response :(   e-> " + fontReset + " " + response_code);
     http.end();
     return false;
   }
 
-  if (response_code == 200){
+  if (response_code == 200)
+  {
     String responseBody = http.getString();
 
     Serial.print(boldGreen + "\n\n         Mqtt Credentials Obtained Successfully :) " + fontReset);
-    
+
     deserializeJson(mqtt_data_doc, responseBody);
     http.end();
     delay(1000);
-    
   }
 
   return true;
-
 }
 
 void clear()
