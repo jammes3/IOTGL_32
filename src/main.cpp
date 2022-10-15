@@ -27,7 +27,7 @@ void check_mqtt_connection();
 bool reconnect();
 void process_sensors();
 void process_actuators();
-void send_data_to_brocker();
+void send_data_to_broker(); 
 void callback(char* topic, byte* payload, unsigned int length);
 void clear();
 
@@ -75,15 +75,15 @@ void setup()
   Serial.print(boldBlue);
   Serial.print(WiFi.localIP());
   Serial.println(fontReset);
-
+  
   client.setCallback(callback);
-
+  
 }
 
 void loop()
 {
   check_mqtt_connection();
-  send_data_to_brocker();
+  send_data_to_broker();
 
 }
 
@@ -91,14 +91,13 @@ void loop()
 int prev_temp = 0;
 int prev_hum = 0;
 
-
 void process_sensors(){
 
 
   //get temp simulation
   int temp = random(1, 100);
   mqtt_data_doc["variables"][0]["last"]["value"] = temp;
-
+  
 
   //save temp?
   int dif = temp - prev_temp;
@@ -131,8 +130,11 @@ void process_sensors(){
 
   prev_hum = hum;
 
+
   //get led status
   mqtt_data_doc["variables"][4]["last"]["value"] = (HIGH == digitalRead(led));
+
+
 
 }
 
@@ -144,28 +146,29 @@ void process_actuators(){
   }
 }
 
-//template
+
+//TEMPLATE ⤵
 void callback(char* topic, byte* payload, unsigned int length){
+   
+   String incoming = "";
 
-  String incoming = "";
+   for (int i = 0; i < length; i++){
+     incoming += (char)payload[i] ;
+   }
 
-  for (int i = 0; i < length; i++){
-    incoming += (char)payload[i] ;
-  }
+   incoming.trim();
 
-  incoming.trim();
+    //process_incoming_msg(String(topic), incoming);
 
-  // process_incoming_msg(String(topic), incoming);
-
-  Serial.println(incoming);
-  Serial.println(String(topic));
+    Serial.println(incoming);
+    Serial.println(String(topic));
 
 
 }
 
 long varsLastSend[20];
 
-void send_data_to_brocker(){
+void send_data_to_broker(){
 
   long now = millis();
 
@@ -195,8 +198,8 @@ void send_data_to_brocker(){
 
 
     }
-
     
+
 
   }
 
@@ -234,7 +237,7 @@ bool reconnect()
   {
     Serial.print(boldRed + "\n\n         Mqtt Client Connection Failed :( " + fontReset);
   }
-  return false;
+  return true;
 }
 
 void check_mqtt_connection()
