@@ -27,6 +27,7 @@ void check_mqtt_connection();
 bool reconnect();
 void process_sensors();
 void process_actuators();
+void send_data_to_brocker();
 void clear();
 
 //Global Vars
@@ -78,12 +79,11 @@ void setup()
 void loop()
 {
   check_mqtt_connection();
+  send_data_to_brocker();
 
   process_sensors();
   process_actuators();
 
-  delay(5000);
-  serializeJsonPretty(mqtt_data_doc, Serial);
 }
 
 
@@ -142,6 +142,42 @@ void process_actuators(){
   }
 }
 
+//template
+long varsLastSend[20];
+
+void send_data_to_brocker(){
+
+  long now = millis();
+
+  for(int i = 0; i < mqtt_data_doc["variables"].size(); i++){
+
+    if (mqtt_data_doc["variables"][i]["variableType"] == "output"){
+      continue;
+    }
+
+    int freq = mqtt_data_doc["variables"][i]["variableSendFreq"];
+
+    if (now - varsLastSend[i] > freq * 1000){
+      varsLastSend[i] = millis();
+
+      String str_root_topic = mqtt_data_doc["topic"];
+      String str_variable = mqtt_data_doc["variables"][i]["variable"];
+      String topic = str_root_topic + str_variable + "/sdata";
+
+      String toSend = "";
+
+      serializeJson(mqtt_data_doc["variables"][i]["last"], toSend);
+
+      client.publish(topic.c_str(), toSend.c_str());
+
+
+    }
+
+    
+
+  }
+
+}
 
 bool reconnect()
 {
