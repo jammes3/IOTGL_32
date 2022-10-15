@@ -81,9 +81,6 @@ void loop()
   check_mqtt_connection();
   send_data_to_brocker();
 
-  process_sensors();
-  process_actuators();
-
 }
 
 
@@ -130,7 +127,8 @@ void process_sensors(){
 
   prev_hum = hum;
 
-
+  //get led status
+  mqtt_data_doc["variables"][4]["last"]["value"] = (HIGH == digitalRead(led));
 
 }
 
@@ -169,6 +167,9 @@ void send_data_to_brocker(){
       serializeJson(mqtt_data_doc["variables"][i]["last"], toSend);
 
       client.publish(topic.c_str(), toSend.c_str());
+
+      Serial.println(topic);
+      Serial.println(toSend);
 
 
     }
@@ -242,6 +243,8 @@ void check_mqtt_connection()
   else
   {
     client.loop();
+    process_sensors();
+    process_actuators();
   }
 }
 
