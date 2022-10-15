@@ -28,6 +28,7 @@ bool reconnect();
 void process_sensors();
 void process_actuators();
 void send_data_to_brocker();
+void callback(char* topic, byte* payload, unsigned int length);
 void clear();
 
 //Global Vars
@@ -74,6 +75,9 @@ void setup()
   Serial.print(boldBlue);
   Serial.print(WiFi.localIP());
   Serial.println(fontReset);
+
+  client.setCallback(callback);
+
 }
 
 void loop()
@@ -141,6 +145,24 @@ void process_actuators(){
 }
 
 //template
+void callback(char* topic, byte* payload, unsigned int length){
+
+  String incoming = "";
+
+  for (int i = 0; i < length; i++){
+    incoming += (char)payload[i] ;
+  }
+
+  incoming.trim();
+
+  // process_incoming_msg(String(topic), incoming);
+
+  Serial.println(incoming);
+  Serial.println(String(topic));
+
+
+}
+
 long varsLastSend[20];
 
 void send_data_to_brocker(){
