@@ -9,8 +9,8 @@
 #include <ArduinoJson.h>
 #include <PubSubClient.h>
 
-String dId = "4566";
-String webhook_pass = "mvzSp1KQ6P";
+String dId = "4568";
+String webhook_pass = "3MdUFaQ019";
 String webhook_endpoint = "http://192.168.1.2:3001/api/getdevicecredentials";
 const char *mqtt_server = "192.168.1.2";
 
@@ -283,7 +283,7 @@ bool reconnect()
   {
     Serial.print(boldRed + "\n\n         Mqtt Client Connection Failed :( " + fontReset);
   }
-  return true;
+  return false;
 }
 
 void check_mqtt_connection()
